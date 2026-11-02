@@ -37,7 +37,6 @@
   async function initStore() {
     setupTelegramLinks();
     await loadProducts();
-    renderCategories();
     renderProducts();
     setupEventListeners();
   }
