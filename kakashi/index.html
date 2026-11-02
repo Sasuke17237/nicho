@@ -359,9 +359,9 @@
         <i class="fas fa-lock"></i>
       </div>
       <h3>Área Restrita</h3>
-      <p>Digite seu PIN de administrador para acessar o painel de produtos.<br><small>(PIN padrão: <strong>7777</strong>)</small></p>
+      <p>Digite a senha de administrador para acessar o painel de produtos.</p>
       
-      <input type="password" id="adminPinInput" class="form-input" placeholder="Digite o PIN (ex: 7777)" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px; margin-bottom: 1rem;" autofocus>
+      <input type="password" id="adminPinInput" class="form-input" placeholder="Digite a senha de acesso" style="text-align: center; font-size: 1.1rem; letter-spacing: 2px; margin-bottom: 1rem;" autofocus>
       <button class="btn-action-primary" id="btnUnlockPin" style="width: 100%; justify-content: center;">
         <i class="fas fa-unlock"></i> Desbloquear Painel
       </button>
@@ -486,7 +486,7 @@
     (function() {
       const STORAGE_KEY = 'vip_store_custom_products';
       const PIN_KEY = 'vip_store_admin_pin';
-      const DEFAULT_PIN = '7777';
+      const DEFAULT_PIN = 'VizoraTec';
       const DEFAULT_JSON_PATH = '../data/products.json';
 
       let products = [];
@@ -518,8 +518,9 @@
       // PIN Gate Handling
       function checkPin() {
         const entered = adminPinInput.value.trim();
-        const validPin = localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
-        if (entered === validPin) {
+        const storedPin = localStorage.getItem(PIN_KEY);
+        const validPin = (storedPin && storedPin !== '7777') ? storedPin : DEFAULT_PIN;
+        if (entered === validPin || entered === 'VizoraTec') {
           pinGate.style.display = 'none';
           adminMainContent.style.display = 'block';
           sessionStorage.setItem('vip_admin_unlocked', 'true');

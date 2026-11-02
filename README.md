@@ -16,7 +16,7 @@ Uma plataforma moderna de catálogo e vendas para produtos digitais (templates, 
 - **Painel Administrativo Oculto (`/kakashi`):**
   - **Invisível para os clientes:** Nenhum botão ou link da loja pública aponta para o painel.
   - Acesso direto e discreto pelo navegador: `seusite.vercel.app/kakashi`.
-  - Proteção por PIN de segurança (PIN padrão: `7777`).
+  - Proteção por senha de segurança (Senha padrão: `VizoraTec`).
   - Cadastro, edição e exclusão de produtos em tempo real com prévia visual da foto.
   - Guia integrado de onde hospedar fotos e vídeos gratuitamente (ImgBB, PostImages, etc.).
   - Botão de 1 clique para baixar o `products.json` atualizado.
@@ -61,7 +61,7 @@ Uma plataforma moderna de catálogo e vendas para produtos digitais (templates, 
 3. Selecione o repositório `minha-loja-vip` e clique em **"Deploy"**.
 4. Em menos de 1 minuto, seu site estará no ar com domínio grátis (ex: `nicho.vercel.app`):
    - **Loja para os clientes:** `https://nicho.vercel.app/`
-   - **Seu painel secreto:** `https://nicho.vercel.app/kakashi` (PIN padrão: `7777`).
+   - **Seu painel secreto:** `https://nicho.vercel.app/kakashi` (Senha: `VizoraTec`).
 
 ---
 
