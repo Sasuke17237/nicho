@@ -104,6 +104,32 @@
     });
   }
 
+  // Helper: Normalize and clean image URLs
+  function cleanImageUrl(url) {
+    if (!url) return '';
+    url = String(url).trim();
+    if (url.startsWith('data:image/')) return url;
+
+    // Google Drive direct link
+    const gDriveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (gDriveMatch && gDriveMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${gDriveMatch[1]}`;
+    }
+
+    // Dropbox direct link
+    if (url.includes('dropbox.com')) {
+      return url.replace('?dl=0', '?raw=1').replace('&dl=0', '&raw=1');
+    }
+
+    // Imgur direct image link
+    const imgurMatch = url.match(/imgur\.com\/(?:gallery\/|a\/)?([a-zA-Z0-9]{5,8})(?:\.[a-zA-Z]{3,4})?$/);
+    if (imgurMatch && imgurMatch[1] && !url.includes('i.imgur.com')) {
+      return `https://i.imgur.com/${imgurMatch[1]}.jpg`;
+    }
+
+    return url;
+  }
+
   // Render Product Cards Grid
   function renderProducts() {
     if (!productGrid) return;
@@ -116,7 +142,7 @@
       productGrid.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
           <i class="fas fa-box-open" style="font-size: 2.5rem; opacity: 0.5; margin-bottom: 1rem; display: block;"></i>
-          <p style="font-size: 1.1rem; font-weight: 600;">Nenhum produto cadastrado nesta categoria.</p>
+          <p style="font-size: 1.1rem; font-weight: 600;">Nenhum produto cadastrado no momento.</p>
         </div>
       `;
       return;
@@ -125,12 +151,13 @@
     productGrid.innerHTML = filtered.map(product => {
       const formattedPrice = Number(product.price).toFixed(2);
       const isVideo = checkIfVideo(product.preview || product.image);
-      const imageSrc = product.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
+      const rawImage = product.image || '';
+      const imageSrc = cleanImageUrl(rawImage) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
 
       return `
         <article class="product-card" data-id="${product.id}">
           <div class="card-media">
-            <img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
+            <img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(product.name)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
             ${product.category ? `<span class="card-category-tag">${escapeHtml(product.category)}</span>` : ''}
           </div>
 
@@ -176,8 +203,9 @@
         </video>
       `;
     } else {
+      const cleanImg = cleanImageUrl(mediaUrl);
       previewContainer.innerHTML = `
-        <img src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(product.name)}" style="width:100%; height:auto; object-fit:contain; border-radius:18px;">
+        <img src="${escapeHtml(cleanImg)}" alt="${escapeHtml(product.name)}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';" style="width:100%; height:auto; object-fit:contain; border-radius:18px;">
       `;
     }
 

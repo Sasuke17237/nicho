@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
   <title>Admin Dashboard • Gestão de Catálogo</title>
   
@@ -436,11 +437,18 @@
           </div>
 
           <div>
-            <label class="form-label" for="prodImage">URL da Capa (Foto) *</label>
-            <input type="url" id="prodImage" class="form-input" placeholder="https://exemplo.com/foto.jpg" required>
+            <label class="form-label" for="prodImage">Foto de Capa (Link ou Upload Direto) *</label>
+            <input type="text" id="prodImage" class="form-input" placeholder="Cole o link da foto (jpg, png, webp, drive, imgur...)" required>
+            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <label for="prodFileInput" class="host-link-tag" style="cursor: pointer; background: rgba(120, 82, 255, 0.12); margin-top: 0;">
+                <i class="fas fa-upload"></i> Escolher foto do celular / PC
+              </label>
+              <input type="file" id="prodFileInput" accept="image/*" style="display: none;">
+              <span id="fileUploadStatus" style="font-size: 0.8rem; color: var(--text-muted);"></span>
+            </div>
             <div class="image-preview-strip">
-              <img id="imagePreviewThumb" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800" alt="Preview" class="image-preview-thumb">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">Prévia da capa</span>
+              <img id="imagePreviewThumb" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800" alt="Preview" class="image-preview-thumb" referrerpolicy="no-referrer">
+              <span id="imageStatusText" style="font-size: 0.8rem; color: var(--text-muted);">Prévia da foto de capa</span>
             </div>
           </div>
 
@@ -459,13 +467,17 @@
           <button type="submit" class="btn-action-primary" id="btnSaveProduct">
             <i class="fas fa-save"></i> Salvar Produto
           </button>
+          <button type="button" class="btn-action-primary" id="btnPublishGithub" style="background: #238636;">
+            <i class="fab fa-github"></i> Publicar no Site (Salvar no GitHub)
+          </button>
           <button type="button" class="btn-action-secondary" id="btnExportJson">
             <i class="fas fa-file-download"></i> Baixar products.json
           </button>
           <button type="button" class="btn-action-secondary" id="btnResetDefaults">
-            <i class="fas fa-undo"></i> Restaurar Catálogo Padrão
+            <i class="fas fa-undo"></i> Restaurar Padrões
           </button>
         </div>
+        <div id="githubPublishStatus" style="margin-top: 12px; font-size: 0.9rem; font-weight: 600; display: none;"></div>
       </form>
     </section>
 
@@ -505,7 +517,10 @@
       const prodPrice = document.getElementById('prodPrice');
       const prodCategory = document.getElementById('prodCategory');
       const prodImage = document.getElementById('prodImage');
+      const prodFileInput = document.getElementById('prodFileInput');
+      const fileUploadStatus = document.getElementById('fileUploadStatus');
       const imagePreviewThumb = document.getElementById('imagePreviewThumb');
+      const imageStatusText = document.getElementById('imageStatusText');
       const prodPreview = document.getElementById('prodPreview');
       const prodDesc = document.getElementById('prodDesc');
       const formTitle = document.getElementById('formTitle');
@@ -513,7 +528,129 @@
       const manageList = document.getElementById('manageList');
       const totalCount = document.getElementById('totalProductsCount');
       const btnExportJson = document.getElementById('btnExportJson');
+      const btnPublishGithub = document.getElementById('btnPublishGithub');
+      const githubPublishStatus = document.getElementById('githubPublishStatus');
       const btnResetDefaults = document.getElementById('btnResetDefaults');
+
+      const GITHUB_REPO = 'Sasuke17237/nicho';
+      function getGithubToken() {
+        let t = localStorage.getItem('vip_github_token');
+        if (!t) {
+          t = prompt('Para publicar direto no seu repositório GitHub, cole seu GitHub Token (ele ficará salvo apenas no seu navegador):');
+          if (t) {
+            t = t.trim();
+            localStorage.setItem('vip_github_token', t);
+          }
+        }
+        return t;
+      }
+
+      // Helper: Normalize and clean image URLs
+      function cleanImageUrl(url) {
+        if (!url) return '';
+        url = String(url).trim();
+        if (url.startsWith('data:image/')) return url;
+
+        // Google Drive direct link
+        const gDriveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (gDriveMatch && gDriveMatch[1]) {
+          return `https://lh3.googleusercontent.com/d/${gDriveMatch[1]}`;
+        }
+
+        // Dropbox direct link
+        if (url.includes('dropbox.com')) {
+          return url.replace('?dl=0', '?raw=1').replace('&dl=0', '&raw=1');
+        }
+
+        // Imgur direct image link
+        const imgurMatch = url.match(/imgur\.com\/(?:gallery\/|a\/)?([a-zA-Z0-9]{5,8})(?:\.[a-zA-Z]{3,4})?$/);
+        if (imgurMatch && imgurMatch[1] && !url.includes('i.imgur.com')) {
+          return `https://i.imgur.com/${imgurMatch[1]}.jpg`;
+        }
+
+        return url;
+      }
+
+      // Live Image Preview Update
+      function updateLivePreview() {
+        const rawVal = prodImage.value.trim();
+        if (!rawVal) {
+          imagePreviewThumb.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
+          if (imageStatusText) imageStatusText.textContent = 'Prévia da foto de capa';
+          return;
+        }
+
+        const cleaned = cleanImageUrl(rawVal);
+        if (cleaned !== rawVal && !rawVal.startsWith('data:')) {
+          prodImage.value = cleaned;
+        }
+
+        imagePreviewThumb.src = cleaned;
+        if (imageStatusText) imageStatusText.textContent = 'Carregando foto...';
+      }
+
+      prodImage.addEventListener('input', updateLivePreview);
+      prodImage.addEventListener('change', updateLivePreview);
+
+      imagePreviewThumb.addEventListener('load', () => {
+        if (imageStatusText) imageStatusText.textContent = '✅ Foto válida';
+      });
+
+      imagePreviewThumb.addEventListener('error', () => {
+        if (imageStatusText) {
+          imageStatusText.textContent = '⚠️ Falha ao carregar foto do link';
+        }
+      });
+
+      // Direct device file upload with canvas compression
+      if (prodFileInput) {
+        prodFileInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            alert('Por favor, selecione um arquivo de imagem (PNG, JPG, WEBP).');
+            return;
+          }
+
+          if (fileUploadStatus) fileUploadStatus.textContent = 'Otimizando imagem...';
+
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            const img = new Image();
+            img.onload = function() {
+              const canvas = document.createElement('canvas');
+              const MAX_DIM = 960;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_DIM) {
+                  height *= MAX_DIM / width;
+                  width = MAX_DIM;
+                }
+              } else {
+                if (height > MAX_DIM) {
+                  width *= MAX_DIM / height;
+                  height = MAX_DIM;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const compressedData = canvas.toDataURL('image/jpeg', 0.82);
+              prodImage.value = compressedData;
+              imagePreviewThumb.src = compressedData;
+              if (fileUploadStatus) fileUploadStatus.textContent = '✅ Foto do dispositivo pronta!';
+              if (imageStatusText) imageStatusText.textContent = '✅ Foto carregada do dispositivo';
+            };
+            img.src = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
 
       // PIN Gate Handling
       function checkPin() {
@@ -541,17 +678,6 @@
         adminMainContent.style.display = 'block';
         initAdmin();
       }
-
-      // Live Image Preview Update
-      prodImage.addEventListener('input', () => {
-        const val = prodImage.value.trim();
-        if (val) {
-          imagePreviewThumb.src = val;
-        }
-      });
-      imagePreviewThumb.addEventListener('error', () => {
-        imagePreviewThumb.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
-      });
 
       // Initialize Admin
       async function initAdmin() {
@@ -583,6 +709,76 @@
         renderManageList();
       }
 
+      // Publish directly to GitHub repository (Triggers automatic Vercel deploy)
+      async function publishToGitHub(silent = false) {
+        const token = getGithubToken();
+        if (!token) return;
+        if (githubPublishStatus) {
+          githubPublishStatus.style.display = 'block';
+          githubPublishStatus.style.color = '#7852ff';
+          githubPublishStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando catálogo no GitHub e Vercel...';
+        }
+
+        try {
+          const getUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data/products.json`;
+          const getRes = await fetch(getUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+
+          let sha = null;
+          if (getRes.ok) {
+            const data = await getRes.json();
+            sha = data.sha;
+          }
+
+          const contentStr = JSON.stringify(products, null, 2);
+          const encodedContent = btoa(unescape(encodeURIComponent(contentStr)));
+
+          const putRes = await fetch(getUrl, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: 'update: catalogo de produtos atualizado via painel kakashi',
+              content: encodedContent,
+              sha: sha
+            })
+          });
+
+          if (putRes.ok) {
+            if (githubPublishStatus) {
+              githubPublishStatus.style.color = '#2e8540';
+              githubPublishStatus.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Publicado no GitHub! A Vercel está atualizando o site agora mesmo.';
+            }
+            if (!silent) {
+              alert('Catálogo publicado com sucesso no GitHub! Em ~20 segundos o site oficial e todos os clientes verão as atualizações.');
+            }
+          } else {
+            const err = await putRes.json();
+            if (githubPublishStatus) {
+              githubPublishStatus.style.color = '#d9383a';
+              githubPublishStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Falha ao publicar no GitHub: ${err.message || 'Erro de autenticação'}`;
+            }
+          }
+        } catch (err) {
+          console.error('Publish error:', err);
+          if (githubPublishStatus) {
+            githubPublishStatus.style.color = '#d9383a';
+            githubPublishStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro de rede ao conectar com GitHub.';
+          }
+        }
+      }
+
+      if (btnPublishGithub) {
+        btnPublishGithub.addEventListener('click', () => publishToGitHub(false));
+      }
+
       function renderManageList() {
         totalCount.textContent = products.length;
         if (products.length === 0) {
@@ -593,7 +789,7 @@
         manageList.innerHTML = products.map(p => `
           <div class="manage-item" data-id="${p.id}">
             <div class="manage-item-info">
-              <img src="${p.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'}" class="manage-item-img" alt="${escape(p.name)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
+              <img src="${cleanImageUrl(p.image) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'}" class="manage-item-img" alt="${escape(p.name)}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
               <div class="manage-item-text">
                 <h4>${escape(p.name)}</h4>
                 <p><strong>$${Number(p.price).toFixed(2)}</strong> • Categoria: ${escape(p.category || 'Geral')}</p>
@@ -613,14 +809,14 @@
       }
 
       // Handle Form Submit (Add or Edit)
-      productForm.addEventListener('submit', (e) => {
+      productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const nameVal = prodName.value.trim();
         const priceVal = parseFloat(prodPrice.value) || 0;
         const catVal = prodCategory.value.trim() || 'Geral';
-        const imgVal = prodImage.value.trim();
-        const previewVal = prodPreview.value.trim() || imgVal;
+        const imgVal = cleanImageUrl(prodImage.value.trim());
+        const previewVal = cleanImageUrl(prodPreview.value.trim()) || imgVal;
         const descVal = prodDesc.value.trim();
 
         if (editingId) {
@@ -655,7 +851,12 @@
         saveToLocalStorage();
         productForm.reset();
         imagePreviewThumb.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
-        alert('Produto salvo com sucesso! Já está visível na sua loja.');
+        if (imageStatusText) imageStatusText.textContent = 'Prévia da foto de capa';
+        if (fileUploadStatus) fileUploadStatus.textContent = '';
+        
+        // Auto publish to GitHub in background
+        publishToGitHub(true);
+        alert('Produto salvo com sucesso! Já está visível na sua loja e sincronizando no GitHub.');
       });
 
       // Actions in List (Edit / Delete)
