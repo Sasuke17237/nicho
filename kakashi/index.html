@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+  <title>Admin Dashboard • Gestão de Catálogo</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../css/glass.css" />
+
+  <style>
+    /* Admin Specific Styling */
+    .admin-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .admin-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 1.8rem;
+      box-shadow: var(--glass-shadow), var(--specular-inner);
+      margin-bottom: 2rem;
+    }
+
+    .admin-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .admin-title-row h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Form Fields */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.2rem;
+    }
+
+    .form-group-full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.45rem;
+    }
+
+    .form-label small {
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 14px;
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      background: #ffffff;
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 0 3px rgba(120, 82, 255, 0.15);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Quick image preview in form */
+    .image-preview-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .image-preview-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #e9ecf5;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Admin Action Toolbar */
+    .admin-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 1.4rem;
+    }
+
+    .btn-action-primary {
+      background: var(--accent-dark);
+      color: white;
+      padding: 0.85rem 1.6rem;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-action-primary:hover {
+      background: var(--accent-dark-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-action-secondary {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      padding: 0.85rem 1.4rem;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-action-secondary:hover {
+      background: white;
+      transform: translateY(-2px);
+    }
+
+    /* Products Table / List */
+    .product-manage-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .manage-item {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .manage-item:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.08);
+    }
+
+    .manage-item-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .manage-item-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #e9ecf5;
+      flex-shrink: 0;
+    }
+
+    .manage-item-text {
+      min-width: 0;
+    }
+
+    .manage-item-text h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .manage-item-text p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .manage-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      background: white;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      transform: scale(1.1);
+    }
+
+    .btn-icon.delete:hover {
+      color: #ff334b;
+      border-color: #ff334b;
+    }
+
+    /* Free Image Hosting Guide Callout */
+    .host-guide-box {
+      background: rgba(120, 82, 255, 0.08);
+      border: 1px solid rgba(120, 82, 255, 0.25);
+      border-radius: 18px;
+      padding: 1.1rem 1.4rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .host-guide-box h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-purple);
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .host-guide-box p {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .host-links {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .host-link-tag {
+      background: white;
+      border: 1px solid rgba(120, 82, 255, 0.2);
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent-purple);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .host-link-tag:hover {
+      background: var(--accent-purple);
+      color: white;
+    }
+
+    /* Secret PIN Gate Overlay */
+    .pin-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 12, 30, 0.8);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .pin-box {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 28px;
+      padding: 2.2rem;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+    }
+
+    .pin-box h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .pin-box p {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.4rem;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .admin-card { padding: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Liquid Background -->
+  <div class="liquid-canvas">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- PIN Protection Modal (Default PIN: 7777) -->
+  <div class="pin-overlay" id="pinGate">
+    <div class="pin-box">
+      <div class="brand-icon" style="margin: 0 auto 1.2rem;">
+        <i class="fas fa-lock"></i>
+      </div>
+      <h3>Área Restrita</h3>
+      <p>Digite seu PIN de administrador para acessar o painel de produtos.<br><small>(PIN padrão: <strong>7777</strong>)</small></p>
+      
+      <input type="password" id="adminPinInput" class="form-input" placeholder="Digite o PIN (ex: 7777)" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px; margin-bottom: 1rem;" autofocus>
+      <button class="btn-action-primary" id="btnUnlockPin" style="width: 100%; justify-content: center;">
+        <i class="fas fa-unlock"></i> Desbloquear Painel
+      </button>
+      <div id="pinErrorMsg" style="color: #ff334b; font-size: 0.82rem; margin-top: 0.8rem; display: none;">PIN incorreto. Tente novamente.</div>
+    </div>
+  </div>
+
+  <div class="admin-container" id="adminMainContent" style="display: none;">
+    <!-- Top Header -->
+    <header class="header-glass">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <i class="fas fa-sliders-h"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Painel Secreto • /kakashi</h1>
+          <p><i class="fas fa-shield-alt" style="color: #7852ff;"></i> Gerenciamento e Publicação de Catálogo</p>
+        </div>
+      </div>
+
+      <a href="../index.html" class="telegram-badge" style="background: rgba(255, 255, 255, 0.7); color: var(--text-primary); border: 1px solid var(--glass-border);">
+        <i class="fas fa-store"></i>
+        <span>Ver Loja dos Clientes</span>
+      </a>
+    </header>
+
+    <!-- Free Image Hosting Guide -->
+    <div class="host-guide-box">
+      <h4><i class="fas fa-cloud-upload-alt"></i> Onde hospedar as fotos dos seus produtos gratuitamente?</h4>
+      <p>
+        Para adicionar fotos e vídeos nos produtos, basta fazer upload em qualquer um desses sites gratuitos e colar o <strong>link direto da imagem</strong> no formulário abaixo:
+      </p>
+      <div class="host-links">
+        <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" class="host-link-tag">
+          <i class="fas fa-external-link-alt"></i> ImgBB (Mais recomendado)
+        </a>
+        <a href="https://postimages.org" target="_blank" rel="noopener noreferrer" class="host-link-tag">
+          <i class="fas fa-external-link-alt"></i> PostImages.org
+        </a>
+        <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" class="host-link-tag">
+          <i class="fas fa-external-link-alt"></i> Unsplash (Fotos livres)
+        </a>
+      </div>
+    </div>
+
+    <!-- Product Form Card -->
+    <section class="admin-card">
+      <div class="admin-title-row">
+        <h2 id="formTitle"><i class="fas fa-plus-circle" style="color: #7852ff;"></i> Cadastrar Novo Produto</h2>
+        <button class="btn-action-secondary" id="btnCancelEdit" style="display: none;">
+          <i class="fas fa-times"></i> Cancelar Edição
+        </button>
+      </div>
+
+      <form id="productForm">
+        <input type="hidden" id="editProductId" value="">
+
+        <div class="form-grid">
+          <div>
+            <label class="form-label" for="prodName">Título do Produto *</label>
+            <input type="text" id="prodName" class="form-input" placeholder="Ex: Mega Pack Presets 2026" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="prodPrice">Preço ($ USD ou R$) *</label>
+            <input type="number" id="prodPrice" class="form-input" placeholder="Ex: 35.00" step="0.01" min="0" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="prodCategory">Categoria <small>(opcional)</small></label>
+            <input type="text" id="prodCategory" class="form-input" placeholder="Ex: Design, Presets, E-books, Vídeos">
+          </div>
+
+          <div>
+            <label class="form-label" for="prodImage">URL da Capa (Foto) *</label>
+            <input type="url" id="prodImage" class="form-input" placeholder="https://exemplo.com/foto.jpg" required>
+            <div class="image-preview-strip">
+              <img id="imagePreviewThumb" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800" alt="Preview" class="image-preview-thumb">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Prévia da capa</span>
+            </div>
+          </div>
+
+          <div class="form-group-full">
+            <label class="form-label" for="prodPreview">URL da Demonstração (Vídeo .mp4 ou Foto Maior) <small>(opcional)</small></label>
+            <input type="url" id="prodPreview" class="form-input" placeholder="https://exemplo.com/preview.mp4 ou link de imagem">
+          </div>
+
+          <div class="form-group-full">
+            <label class="form-label" for="prodDesc">Descrição do Produto</label>
+            <textarea id="prodDesc" class="form-textarea" placeholder="Descreva os benefícios, conteúdo incluído e detalhes da entrega..."></textarea>
+          </div>
+        </div>
+
+        <div class="admin-toolbar">
+          <button type="submit" class="btn-action-primary" id="btnSaveProduct">
+            <i class="fas fa-save"></i> Salvar Produto
+          </button>
+          <button type="button" class="btn-action-secondary" id="btnExportJson">
+            <i class="fas fa-file-download"></i> Baixar products.json
+          </button>
+          <button type="button" class="btn-action-secondary" id="btnResetDefaults">
+            <i class="fas fa-undo"></i> Restaurar Catálogo Padrão
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Products List Section -->
+    <section class="admin-card">
+      <div class="admin-title-row">
+        <h2><i class="fas fa-boxes" style="color: #7852ff;"></i> Catálogo Atual (<span id="totalProductsCount">0</span> itens)</h2>
+      </div>
+
+      <div class="product-manage-list" id="manageList">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+  </div>
+
+  <!-- Admin Script Logic -->
+  <script>
+    (function() {
+      const STORAGE_KEY = 'vip_store_custom_products';
+      const PIN_KEY = 'vip_store_admin_pin';
+      const DEFAULT_PIN = '7777';
+      const DEFAULT_JSON_PATH = '../data/products.json';
+
+      let products = [];
+      let editingId = null;
+
+      // Elements
+      const pinGate = document.getElementById('pinGate');
+      const adminPinInput = document.getElementById('adminPinInput');
+      const btnUnlockPin = document.getElementById('btnUnlockPin');
+      const pinErrorMsg = document.getElementById('pinErrorMsg');
+      const adminMainContent = document.getElementById('adminMainContent');
+
+      const productForm = document.getElementById('productForm');
+      const editProductId = document.getElementById('editProductId');
+      const prodName = document.getElementById('prodName');
+      const prodPrice = document.getElementById('prodPrice');
+      const prodCategory = document.getElementById('prodCategory');
+      const prodImage = document.getElementById('prodImage');
+      const imagePreviewThumb = document.getElementById('imagePreviewThumb');
+      const prodPreview = document.getElementById('prodPreview');
+      const prodDesc = document.getElementById('prodDesc');
+      const formTitle = document.getElementById('formTitle');
+      const btnCancelEdit = document.getElementById('btnCancelEdit');
+      const manageList = document.getElementById('manageList');
+      const totalCount = document.getElementById('totalProductsCount');
+      const btnExportJson = document.getElementById('btnExportJson');
+      const btnResetDefaults = document.getElementById('btnResetDefaults');
+
+      // PIN Gate Handling
+      function checkPin() {
+        const entered = adminPinInput.value.trim();
+        const validPin = localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
+        if (entered === validPin) {
+          pinGate.style.display = 'none';
+          adminMainContent.style.display = 'block';
+          sessionStorage.setItem('vip_admin_unlocked', 'true');
+          initAdmin();
+        } else {
+          pinErrorMsg.style.display = 'block';
+        }
+      }
+
+      btnUnlockPin.addEventListener('click', checkPin);
+      adminPinInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') checkPin();
+      });
+
+      // Check if already unlocked in this session
+      if (sessionStorage.getItem('vip_admin_unlocked') === 'true') {
+        pinGate.style.display = 'none';
+        adminMainContent.style.display = 'block';
+        initAdmin();
+      }
+
+      // Live Image Preview Update
+      prodImage.addEventListener('input', () => {
+        const val = prodImage.value.trim();
+        if (val) {
+          imagePreviewThumb.src = val;
+        }
+      });
+      imagePreviewThumb.addEventListener('error', () => {
+        imagePreviewThumb.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
+      });
+
+      // Initialize Admin
+      async function initAdmin() {
+        await loadProductsData();
+        renderManageList();
+      }
+
+      async function loadProductsData() {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            products = JSON.parse(stored);
+            if (Array.isArray(products) && products.length > 0) return;
+          }
+        } catch (_) {}
+
+        try {
+          const res = await fetch(DEFAULT_JSON_PATH);
+          if (res.ok) {
+            products = await res.json();
+          }
+        } catch (e) {
+          console.warn('Could not load defaults:', e);
+        }
+      }
+
+      function saveToLocalStorage() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+        renderManageList();
+      }
+
+      function renderManageList() {
+        totalCount.textContent = products.length;
+        if (products.length === 0) {
+          manageList.innerHTML = `<p style="text-align:center; padding: 2rem; color: var(--text-secondary);">Nenhum produto cadastrado no momento.</p>`;
+          return;
+        }
+
+        manageList.innerHTML = products.map(p => `
+          <div class="manage-item" data-id="${p.id}">
+            <div class="manage-item-info">
+              <img src="${p.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'}" class="manage-item-img" alt="${escape(p.name)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
+              <div class="manage-item-text">
+                <h4>${escape(p.name)}</h4>
+                <p><strong>$${Number(p.price).toFixed(2)}</strong> • Categoria: ${escape(p.category || 'Geral')}</p>
+              </div>
+            </div>
+
+            <div class="manage-item-actions">
+              <button class="btn-icon" data-action="edit" data-id="${p.id}" title="Editar Produto">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="btn-icon delete" data-action="delete" data-id="${p.id}" title="Excluir Produto">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Handle Form Submit (Add or Edit)
+      productForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const nameVal = prodName.value.trim();
+        const priceVal = parseFloat(prodPrice.value) || 0;
+        const catVal = prodCategory.value.trim() || 'Geral';
+        const imgVal = prodImage.value.trim();
+        const previewVal = prodPreview.value.trim() || imgVal;
+        const descVal = prodDesc.value.trim();
+
+        if (editingId) {
+          const index = products.findIndex(p => p.id === editingId);
+          if (index !== -1) {
+            products[index] = {
+              ...products[index],
+              name: nameVal,
+              price: priceVal,
+              category: catVal,
+              image: imgVal,
+              preview: previewVal,
+              description: descVal
+            };
+          }
+          editingId = null;
+          formTitle.innerHTML = `<i class="fas fa-plus-circle" style="color: #7852ff;"></i> Cadastrar Novo Produto`;
+          btnCancelEdit.style.display = 'none';
+        } else {
+          const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+          products.unshift({
+            id: newId,
+            name: nameVal,
+            price: priceVal,
+            category: catVal,
+            image: imgVal,
+            preview: previewVal,
+            description: descVal
+          });
+        }
+
+        saveToLocalStorage();
+        productForm.reset();
+        imagePreviewThumb.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
+        alert('Produto salvo com sucesso! Já está visível na sua loja.');
+      });
+
+      // Actions in List (Edit / Delete)
+      manageList.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-action="edit"]');
+        if (editBtn) {
+          const id = Number(editBtn.getAttribute('data-id'));
+          const item = products.find(p => p.id === id);
+          if (item) {
+            editingId = id;
+            prodName.value = item.name;
+            prodPrice.value = item.price;
+            prodCategory.value = item.category || '';
+            prodImage.value = item.image || '';
+            imagePreviewThumb.src = item.image || '';
+            prodPreview.value = item.preview || '';
+            prodDesc.value = item.description || '';
+
+            formTitle.innerHTML = `<i class="fas fa-edit" style="color: #7852ff;"></i> Editando: ${escape(item.name)}`;
+            btnCancelEdit.style.display = 'inline-flex';
+            window.scrollTo({ top: productForm.offsetTop - 100, behavior: 'smooth' });
+          }
+          return;
+        }
+
+        const delBtn = e.target.closest('[data-action="delete"]');
+        if (delBtn) {
+          const id = Number(delBtn.getAttribute('data-id'));
+          if (confirm('Tem certeza que deseja excluir este produto?')) {
+            products = products.filter(p => p.id !== id);
+            saveToLocalStorage();
+          }
+          return;
+        }
+      });
+
+      // Cancel edit
+      btnCancelEdit.addEventListener('click', () => {
+        editingId = null;
+        productForm.reset();
+        formTitle.innerHTML = `<i class="fas fa-plus-circle" style="color: #7852ff;"></i> Cadastrar Novo Produto`;
+        btnCancelEdit.style.display = 'none';
+      });
+
+      // Download products.json
+      btnExportJson.addEventListener('click', () => {
+        const jsonStr = JSON.stringify(products, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'products.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // Reset to defaults
+      btnResetDefaults.addEventListener('click', async () => {
+        if (confirm('Deseja restaurar o catálogo padrão de demonstração? Seus produtos personalizados salvos localmente serão substituídos.')) {
+          localStorage.removeItem(STORAGE_KEY);
+          await loadProductsData();
+          renderManageList();
+          alert('Catálogo padrão restaurado com sucesso!');
+        }
+      });
+
+      function escape(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+    })();
+  </script>
+</body>
+</html>

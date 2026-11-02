@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+  <title>VIP Store • Produtos Digitais Exclusivos</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Apple Liquid Glass Styling -->
+  <link rel="stylesheet" href="css/glass.css" />
+</head>
+<body>
+
+  <!-- Background Liquid Blobs -->
+  <div class="liquid-canvas">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="container">
+    <!-- Apple Liquid Glass Floating Header -->
+    <header class="header-glass">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <i class="fas fa-gem"></i>
+        </div>
+        <div class="brand-text">
+          <h1>VIP STORE</h1>
+          <p><i class="fas fa-sparkles" style="color: #7852ff;"></i> Pré-visualização Instantânea • Acesso Imediato</p>
+        </div>
+      </div>
+
+      <!-- Telegram Direct Contact Badge -->
+      <a href="https://t.me/SPIDERSELLER7" target="_blank" rel="noopener noreferrer" class="telegram-badge telegram-link-target">
+        <i class="fab fa-telegram-plane"></i>
+        <span>@SPIDERSELLER7</span>
+        <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.72rem; opacity: 0.85;"></i>
+      </a>
+    </header>
+
+    <!-- Category Filter Bar -->
+    <nav class="category-bar" id="categoryBar" aria-label="Categorias"></nav>
+
+    <!-- Product Grid -->
+    <main class="product-grid" id="productGrid"></main>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+      <div class="footer-dots">
+        <i class="fas fa-circle" style="font-size: 0.35rem;"></i>
+        <i class="fas fa-gem"></i>
+        <i class="fas fa-circle" style="font-size: 0.35rem;"></i>
+      </div>
+      <p>Entregas seguras via Telegram • Pagamentos rápidos e suporte dedicado</p>
+    </footer>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal-backdrop" id="previewModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="glass-modal">
+      <div class="modal-header">
+        <h3 id="previewTitle">Demonstração</h3>
+        <button class="modal-close-btn" id="closePreviewBtn" aria-label="Fechar modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-media-box" id="previewContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buy / Checkout Modal -->
+  <div class="modal-backdrop" id="buyModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="glass-modal">
+      <div class="modal-header">
+        <h3>Finalizar Compra</h3>
+        <button class="modal-close-btn" id="closeBuyBtn" aria-label="Fechar modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Selected Product Overview -->
+        <div class="checkout-product-strip">
+          <div class="strip-details">
+            <h4 id="buyProductName">Carregando produto...</h4>
+            <p id="buyProductDesc">Descrição curta do item selecionado.</p>
+          </div>
+          <div class="strip-price" id="buyProductPrice">$0.00</div>
+        </div>
+
+        <p class="payment-grid-title">Escolha o método de pagamento preferido:</p>
+        
+        <!-- Payment Options Grid -->
+        <div class="payment-methods-grid">
+          <div class="method-card is-selected" data-method="Pix">
+            <i class="fas fa-qrcode"></i>
+            <span>Pix Instantâneo</span>
+          </div>
+          <div class="method-card" data-method="Cripto (USDT/BTC)">
+            <i class="fas fa-coins"></i>
+            <span>Cripto (USDT / BTC)</span>
+          </div>
+          <div class="method-card" data-method="Cartão de Crédito">
+            <i class="fas fa-credit-card"></i>
+            <span>Cartão de Crédito</span>
+          </div>
+          <div class="method-card" data-method="PayPal">
+            <i class="fab fa-paypal"></i>
+            <span>PayPal</span>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button class="checkout-action-btn" id="confirmTelegramBuyBtn">
+          <i class="fab fa-telegram-plane"></i>
+          <span>Continuar no Telegram</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store Engine -->
+  <script src="js/store.js"></script>
+</body>
+</html>

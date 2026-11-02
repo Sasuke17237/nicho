@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/kakashi", "destination": "/kakashi/index.html" }
+  ],
+  "cleanUrls": true
+}
