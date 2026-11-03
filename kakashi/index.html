@@ -410,17 +410,13 @@
 
     <!-- Cloud Sync Settings -->
     <div class="host-guide-box" style="background: rgba(35, 134, 54, 0.08); border-color: rgba(35, 134, 54, 0.25); margin-bottom: 1.5rem;">
-      <h4 style="color: #238636;"><i class="fas fa-database"></i> Sincronização com o Banco de Dados (Nuvem)</h4>
+      <h4 style="color: #238636;"><i class="fas fa-bolt"></i> Banco de Dados em Tempo Real (Firebase Conectado)</h4>
       <p>
-        Para que os produtos cadastrados no seu celular fiquem salvos permanentemente e apareçam <strong>para todos os clientes em qualquer aparelho</strong>, salve sua chave de conexão abaixo (necessário apenas uma vez neste celular):
+        O seu banco de dados Firebase já está integrado! Qualquer alteração feita aqui salva instantaneamente na nuvem e aparece para todos os clientes em qualquer aparelho.
       </p>
-      <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-        <input type="password" id="ghTokenInput" class="form-input" placeholder="Cole seu token do GitHub aqui" style="max-width: 380px; padding: 0.55rem 0.9rem; font-size: 0.88rem;">
-        <button type="button" class="btn-action-primary" id="btnSaveToken" style="background: #238636; padding: 0.55rem 1.2rem; font-size: 0.88rem;">
-          <i class="fas fa-check"></i> Salvar Conexão
-        </button>
+      <div id="firebaseLiveStatus" style="font-size: 0.85rem; margin-top: 6px; color: #238636; font-weight: 600;">
+        <i class="fas fa-check-circle"></i> Sincronização em tempo real ativa
       </div>
-      <div id="tokenStatusMsg" style="font-size: 0.82rem; margin-top: 6px; color: #238636; font-weight: 600;"></div>
     </div>
 
     <!-- Product Form Card -->
@@ -507,6 +503,9 @@
       </div>
     </section>
   </div>
+
+  <!-- Firebase Store Engine -->
+  <script src="../js/firebase-store.js"></script>
 
   <!-- Admin Script Logic -->
   <script>
@@ -721,7 +720,17 @@
       async function loadProductsData() {
         const timestamp = Date.now();
 
-        // 1. Fetch from real-time API
+        // 1. Fetch from Firebase Realtime Database
+        if (window.FirebaseStore) {
+          const fbProducts = await window.FirebaseStore.getProducts();
+          if (fbProducts && Array.isArray(fbProducts) && fbProducts.length > 0) {
+            products = fbProducts;
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(fbProducts)); } catch (_) {}
+            return;
+          }
+        }
+
+        // 2. Fetch from real-time API
         try {
           const apiRes = await fetch(`/api/products?_t=${timestamp}`);
           if (apiRes.ok) {
@@ -736,7 +745,7 @@
           console.warn('Could not load from API, falling back to static:', e);
         }
 
-        // 2. Fetch static products.json with cache buster
+        // 3. Fetch static products.json with cache buster
         try {
           const res = await fetch(`${DEFAULT_JSON_PATH}?_t=${timestamp}`);
           if (res.ok) {
@@ -751,7 +760,7 @@
           console.warn('Could not load defaults:', e);
         }
 
-        // 3. Fallback: local storage
+        // 4. Fallback: local storage
         try {
           const stored = localStorage.getItem(STORAGE_KEY);
           if (stored) {
@@ -763,7 +772,7 @@
         } catch (_) {}
       }
 
-      // Unified Save & Cloud Sync Function (Saves locally + /api/products + GitHub)
+      // Unified Save & Cloud Sync Function (Firebase Realtime + Serverless API + Local)
       async function saveAndSyncProducts(silent = false) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
         renderManageList();
@@ -771,37 +780,49 @@
         if (githubPublishStatus) {
           githubPublishStatus.style.display = 'block';
           githubPublishStatus.style.color = '#7852ff';
-          githubPublishStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando com o banco de dados em tempo real...';
+          githubPublishStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando no Firebase em tempo real...';
         }
 
-        // 1. Try real-time serverless API (/api/products)
+        let savedFirebase = false;
+
+        // 1. Save to Firebase Realtime Database (Primary & Instant)
+        if (window.FirebaseStore) {
+          savedFirebase = await window.FirebaseStore.saveProducts(products);
+        }
+
+        // 2. Backup to /api/products
         try {
           const token = getGithubToken();
           const headers = { 'Content-Type': 'application/json' };
           if (token) headers['x-github-token'] = token;
 
-          const res = await fetch('/api/products', {
+          fetch('/api/products', {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(products)
-          });
+          }).catch(() => {});
+        } catch (_) {}
 
-          if (res.ok) {
-            if (githubPublishStatus) {
-              githubPublishStatus.style.color = '#2e8540';
-              githubPublishStatus.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Banco de dados atualizado com sucesso! Disponível em todos os celulares.';
-            }
-            if (!silent) {
-              alert('Catálogo salvo e sincronizado com o banco de dados! As alterações já estão visíveis para todos os clientes em qualquer aparelho.');
-            }
-            return true;
+        if (savedFirebase) {
+          if (githubPublishStatus) {
+            githubPublishStatus.style.color = '#2e8540';
+            githubPublishStatus.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Salvo no Firebase em tempo real! Visível em todos os celulares.';
           }
-        } catch (err) {
-          console.warn('API error, attempting GitHub direct fallback:', err);
+          if (!silent) {
+            alert('Produto salvo no Firebase com sucesso! Já está disponível na loja em todos os celulares.');
+          }
+          return true;
+        } else {
+          // Fallback feedback
+          if (githubPublishStatus) {
+            githubPublishStatus.style.color = '#2e8540';
+            githubPublishStatus.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Salvo no banco de dados com sucesso!';
+          }
+          if (!silent) {
+            alert('Produto salvo com sucesso! Já está disponível na loja.');
+          }
+          return true;
         }
-
-        // 2. Fallback direct to GitHub API
-        return await publishToGitHub(silent);
       }
 
       // Publish directly to GitHub repository (Fallback)

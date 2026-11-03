@@ -49,11 +49,21 @@
     });
   }
 
-  // Load products from API / Cloud Database (with static & offline fallback)
+  // Load products from Firebase Realtime Database (with API & static fallback)
   async function loadProducts() {
     const timestamp = Date.now();
 
-    // 1. Fetch from real-time API database
+    // 1. Fetch from Firebase Realtime Database
+    if (window.FirebaseStore) {
+      const fbProducts = await window.FirebaseStore.getProducts();
+      if (fbProducts && Array.isArray(fbProducts) && fbProducts.length > 0) {
+        allProducts = fbProducts;
+        try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(fbProducts)); } catch (_) {}
+        return;
+      }
+    }
+
+    // 2. Fetch from real-time API database (/api/products)
     try {
       const apiRes = await fetch(`/api/products?_t=${timestamp}`);
       if (apiRes.ok) {
@@ -68,7 +78,7 @@
       console.warn('API /api/products unavailable, trying static fallback:', err);
     }
 
-    // 2. Fallback: Fetch static products.json with cache buster
+    // 3. Fallback: Fetch static products.json with cache buster
     try {
       const response = await fetch(`${CONFIG.defaultDataPath}?_t=${timestamp}`);
       if (response.ok) {
@@ -83,7 +93,7 @@
       console.warn('Network error loading static products:', err);
     }
 
-    // 3. Offline backup: localStorage
+    // 4. Offline backup: localStorage
     try {
       const stored = localStorage.getItem(CONFIG.storageKey);
       if (stored) {
