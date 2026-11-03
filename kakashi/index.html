@@ -408,6 +408,21 @@
       </div>
     </div>
 
+    <!-- Cloud Sync Settings -->
+    <div class="host-guide-box" style="background: rgba(35, 134, 54, 0.08); border-color: rgba(35, 134, 54, 0.25); margin-bottom: 1.5rem;">
+      <h4 style="color: #238636;"><i class="fas fa-database"></i> Sincronização com o Banco de Dados (Nuvem)</h4>
+      <p>
+        Para que os produtos cadastrados no seu celular fiquem salvos permanentemente e apareçam <strong>para todos os clientes em qualquer aparelho</strong>, salve sua chave de conexão abaixo (necessário apenas uma vez neste celular):
+      </p>
+      <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+        <input type="password" id="ghTokenInput" class="form-input" placeholder="Cole seu token do GitHub aqui" style="max-width: 380px; padding: 0.55rem 0.9rem; font-size: 0.88rem;">
+        <button type="button" class="btn-action-primary" id="btnSaveToken" style="background: #238636; padding: 0.55rem 1.2rem; font-size: 0.88rem;">
+          <i class="fas fa-check"></i> Salvar Conexão
+        </button>
+      </div>
+      <div id="tokenStatusMsg" style="font-size: 0.82rem; margin-top: 6px; color: #238636; font-weight: 600;"></div>
+    </div>
+
     <!-- Product Form Card -->
     <section class="admin-card">
       <div class="admin-title-row">
@@ -533,16 +548,34 @@
       const btnResetDefaults = document.getElementById('btnResetDefaults');
 
       const GITHUB_REPO = 'Sasuke17237/nicho';
-      function getGithubToken() {
-        let t = localStorage.getItem('vip_github_token');
-        if (!t) {
-          t = prompt('Para publicar direto no seu repositório GitHub, cole seu GitHub Token (ele ficará salvo apenas no seu navegador):');
-          if (t) {
-            t = t.trim();
-            localStorage.setItem('vip_github_token', t);
+      const ghTokenInput = document.getElementById('ghTokenInput');
+      const btnSaveToken = document.getElementById('btnSaveToken');
+      const tokenStatusMsg = document.getElementById('tokenStatusMsg');
+
+      // Initialize Token Input
+      const savedToken = localStorage.getItem('vip_github_token');
+      if (savedToken && ghTokenInput) {
+        ghTokenInput.value = savedToken;
+        if (tokenStatusMsg) tokenStatusMsg.textContent = '✅ Chave de sincronização ativa neste aparelho.';
+      }
+
+      if (btnSaveToken) {
+        btnSaveToken.addEventListener('click', () => {
+          const val = ghTokenInput.value.trim();
+          if (val) {
+            localStorage.setItem('vip_github_token', val);
+            if (tokenStatusMsg) tokenStatusMsg.textContent = '✅ Chave salva com sucesso! Sincronização ativada.';
+            alert('Chave salva com sucesso! Agora suas alterações serão gravadas no banco de dados automaticamente.');
+            saveAndSyncProducts(true);
+          } else {
+            localStorage.removeItem('vip_github_token');
+            if (tokenStatusMsg) tokenStatusMsg.textContent = 'Chave removida.';
           }
-        }
-        return t;
+        });
+      }
+
+      function getGithubToken() {
+        return localStorage.getItem('vip_github_token') || '';
       }
 
       // Helper: Normalize and clean image URLs
@@ -686,30 +719,92 @@
       }
 
       async function loadProductsData() {
-        try {
-          const stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            products = JSON.parse(stored);
-            if (Array.isArray(products) && products.length > 0) return;
-          }
-        } catch (_) {}
+        const timestamp = Date.now();
 
+        // 1. Fetch from real-time API
         try {
-          const res = await fetch(DEFAULT_JSON_PATH);
+          const apiRes = await fetch(`/api/products?_t=${timestamp}`);
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            if (Array.isArray(data) && data.length > 0) {
+              products = data;
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not load from API, falling back to static:', e);
+        }
+
+        // 2. Fetch static products.json with cache buster
+        try {
+          const res = await fetch(`${DEFAULT_JSON_PATH}?_t=${timestamp}`);
           if (res.ok) {
-            products = await res.json();
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              products = data;
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+              return;
+            }
           }
         } catch (e) {
           console.warn('Could not load defaults:', e);
         }
+
+        // 3. Fallback: local storage
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              products = parsed;
+            }
+          }
+        } catch (_) {}
       }
 
-      function saveToLocalStorage() {
+      // Unified Save & Cloud Sync Function (Saves locally + /api/products + GitHub)
+      async function saveAndSyncProducts(silent = false) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
         renderManageList();
+
+        if (githubPublishStatus) {
+          githubPublishStatus.style.display = 'block';
+          githubPublishStatus.style.color = '#7852ff';
+          githubPublishStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando com o banco de dados em tempo real...';
+        }
+
+        // 1. Try real-time serverless API (/api/products)
+        try {
+          const token = getGithubToken();
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['x-github-token'] = token;
+
+          const res = await fetch('/api/products', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(products)
+          });
+
+          if (res.ok) {
+            if (githubPublishStatus) {
+              githubPublishStatus.style.color = '#2e8540';
+              githubPublishStatus.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Banco de dados atualizado com sucesso! Disponível em todos os celulares.';
+            }
+            if (!silent) {
+              alert('Catálogo salvo e sincronizado com o banco de dados! As alterações já estão visíveis para todos os clientes em qualquer aparelho.');
+            }
+            return true;
+          }
+        } catch (err) {
+          console.warn('API error, attempting GitHub direct fallback:', err);
+        }
+
+        // 2. Fallback direct to GitHub API
+        return await publishToGitHub(silent);
       }
 
-      // Publish directly to GitHub repository (Triggers automatic Vercel deploy)
+      // Publish directly to GitHub repository (Fallback)
       async function publishToGitHub(silent = false) {
         const token = getGithubToken();
         if (!token) return;
@@ -776,7 +871,7 @@
       }
 
       if (btnPublishGithub) {
-        btnPublishGithub.addEventListener('click', () => publishToGitHub(false));
+        btnPublishGithub.addEventListener('click', () => saveAndSyncProducts(false));
       }
 
       function renderManageList() {
@@ -848,19 +943,16 @@
           });
         }
 
-        saveToLocalStorage();
         productForm.reset();
         imagePreviewThumb.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800';
         if (imageStatusText) imageStatusText.textContent = 'Prévia da foto de capa';
         if (fileUploadStatus) fileUploadStatus.textContent = '';
         
-        // Auto publish to GitHub in background
-        publishToGitHub(true);
-        alert('Produto salvo com sucesso! Já está visível na sua loja e sincronizando no GitHub.');
+        await saveAndSyncProducts(false);
       });
 
       // Actions in List (Edit / Delete)
-      manageList.addEventListener('click', (e) => {
+      manageList.addEventListener('click', async (e) => {
         const editBtn = e.target.closest('[data-action="edit"]');
         if (editBtn) {
           const id = Number(editBtn.getAttribute('data-id'));
@@ -887,7 +979,7 @@
           const id = Number(delBtn.getAttribute('data-id'));
           if (confirm('Tem certeza que deseja excluir este produto?')) {
             products = products.filter(p => p.id !== id);
-            saveToLocalStorage();
+            await saveAndSyncProducts(true);
           }
           return;
         }

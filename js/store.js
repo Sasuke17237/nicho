@@ -49,32 +49,50 @@
     });
   }
 
-  // Load products from localStorage or JSON file
+  // Load products from API / Cloud Database (with static & offline fallback)
   async function loadProducts() {
+    const timestamp = Date.now();
+
+    // 1. Fetch from real-time API database
+    try {
+      const apiRes = await fetch(`/api/products?_t=${timestamp}`);
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        if (Array.isArray(data) && data.length > 0) {
+          allProducts = data;
+          try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(data)); } catch (_) {}
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('API /api/products unavailable, trying static fallback:', err);
+    }
+
+    // 2. Fallback: Fetch static products.json with cache buster
+    try {
+      const response = await fetch(`${CONFIG.defaultDataPath}?_t=${timestamp}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          allProducts = data;
+          try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(data)); } catch (_) {}
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Network error loading static products:', err);
+    }
+
+    // 3. Offline backup: localStorage
     try {
       const stored = localStorage.getItem(CONFIG.storageKey);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
           allProducts = parsed;
-          return;
         }
       }
-    } catch (e) {
-      console.warn('Could not read from local storage:', e);
-    }
-
-    // Fallback: Fetch default products.json
-    try {
-      const response = await fetch(CONFIG.defaultDataPath);
-      if (response.ok) {
-        allProducts = await response.json();
-      } else {
-        console.error('Failed to load default products.json');
-      }
-    } catch (err) {
-      console.error('Network error loading products:', err);
-    }
+    } catch (e) {}
   }
 
   // Render Category Filter Pills
