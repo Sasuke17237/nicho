@@ -414,6 +414,12 @@
       <p>
         O seu banco de dados Firebase já está integrado! Qualquer alteração feita aqui salva instantaneamente na nuvem e aparece para todos os clientes em qualquer aparelho.
       </p>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
+        <button type="button" class="btn-action-secondary" id="btnRecoverLocal" style="background: #ffffff; padding: 0.5rem 1rem; font-size: 0.85rem; border-color: #238636; color: #238636;">
+          <i class="fas fa-history"></i> Resgatar Histórico da Memória Local
+        </button>
+        <span id="recoverMsg" style="font-size: 0.82rem; color: #238636; font-weight: 600;"></span>
+      </div>
       <div id="firebaseLiveStatus" style="font-size: 0.85rem; margin-top: 6px; color: #238636; font-weight: 600;">
         <i class="fas fa-check-circle"></i> Sincronização em tempo real ativa
       </div>
@@ -546,35 +552,33 @@
       const githubPublishStatus = document.getElementById('githubPublishStatus');
       const btnResetDefaults = document.getElementById('btnResetDefaults');
 
-      const GITHUB_REPO = 'Sasuke17237/nicho';
-      const ghTokenInput = document.getElementById('ghTokenInput');
-      const btnSaveToken = document.getElementById('btnSaveToken');
-      const tokenStatusMsg = document.getElementById('tokenStatusMsg');
+      const btnRecoverLocal = document.getElementById('btnRecoverLocal');
+      const recoverMsg = document.getElementById('recoverMsg');
 
-      // Initialize Token Input
-      const savedToken = localStorage.getItem('vip_github_token');
-      if (savedToken && ghTokenInput) {
-        ghTokenInput.value = savedToken;
-        if (tokenStatusMsg) tokenStatusMsg.textContent = '✅ Chave de sincronização ativa neste aparelho.';
-      }
+      if (btnRecoverLocal) {
+        btnRecoverLocal.addEventListener('click', async () => {
+          let foundItems = null;
+          // Procurar por chaves antigas de backup no localStorage
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            try {
+              const val = JSON.parse(localStorage.getItem(k));
+              if (Array.isArray(val) && val.length > 0 && val[0].name && val[0].price) {
+                foundItems = val;
+                break;
+              }
+            } catch (_) {}
+          }
 
-      if (btnSaveToken) {
-        btnSaveToken.addEventListener('click', () => {
-          const val = ghTokenInput.value.trim();
-          if (val) {
-            localStorage.setItem('vip_github_token', val);
-            if (tokenStatusMsg) tokenStatusMsg.textContent = '✅ Chave salva com sucesso! Sincronização ativada.';
-            alert('Chave salva com sucesso! Agora suas alterações serão gravadas no banco de dados automaticamente.');
-            saveAndSyncProducts(true);
+          if (foundItems && foundItems.length > 0) {
+            products = foundItems;
+            renderManageList();
+            if (recoverMsg) recoverMsg.textContent = `✅ ${foundItems.length} produtos resgatados! Sincronizando...`;
+            await saveAndSyncProducts(false);
           } else {
-            localStorage.removeItem('vip_github_token');
-            if (tokenStatusMsg) tokenStatusMsg.textContent = 'Chave removida.';
+            alert('Nenhum histórico antigo encontrado na memória deste navegador.');
           }
         });
-      }
-
-      function getGithubToken() {
-        return localStorage.getItem('vip_github_token') || '';
       }
 
       // Helper: Normalize and clean image URLs
