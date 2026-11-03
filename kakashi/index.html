@@ -720,7 +720,23 @@
       async function loadProductsData() {
         const timestamp = Date.now();
 
-        // 1. Fetch from Firebase Realtime Database
+        // 1. Prioridade inicial: verificar se este aparelho tem edições locais pendentes salvas
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              products = parsed;
+              // Sincroniza imediatamente os produtos deste celular para o Firebase!
+              if (window.FirebaseStore) {
+                window.FirebaseStore.saveProducts(products).catch(() => {});
+              }
+              return;
+            }
+          }
+        } catch (_) {}
+
+        // 2. Buscar do Firebase Realtime Database
         if (window.FirebaseStore) {
           const fbProducts = await window.FirebaseStore.getProducts();
           if (fbProducts && Array.isArray(fbProducts) && fbProducts.length > 0) {
@@ -730,7 +746,7 @@
           }
         }
 
-        // 2. Fetch from real-time API
+        // 3. Buscar da API em tempo real
         try {
           const apiRes = await fetch(`/api/products?_t=${timestamp}`);
           if (apiRes.ok) {
@@ -745,7 +761,7 @@
           console.warn('Could not load from API, falling back to static:', e);
         }
 
-        // 3. Fetch static products.json with cache buster
+        // 4. Buscar do products.json estático
         try {
           const res = await fetch(`${DEFAULT_JSON_PATH}?_t=${timestamp}`);
           if (res.ok) {
@@ -759,17 +775,6 @@
         } catch (e) {
           console.warn('Could not load defaults:', e);
         }
-
-        // 4. Fallback: local storage
-        try {
-          const stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              products = parsed;
-            }
-          }
-        } catch (_) {}
       }
 
       // Unified Save & Cloud Sync Function (Firebase Realtime + Serverless API + Local)
