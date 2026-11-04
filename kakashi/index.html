@@ -485,7 +485,14 @@
             <i class="fas fa-save"></i> Salvar Produto
           </button>
           <button type="button" class="btn-action-primary" id="btnPublishGithub" style="background: #238636;">
-            <i class="fab fa-github"></i> Publicar no Site (Salvar no GitHub)
+            <i class="fas fa-cloud-upload-alt"></i> Salvar no Firebase
+          </button>
+          <label for="importJsonFileInput" class="btn-action-primary" style="background: #4f46e5; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-file-import"></i> Importar Arquivo JSON
+          </label>
+          <input type="file" id="importJsonFileInput" accept=".json,application/json,text/plain" style="display: none;">
+          <button type="button" class="btn-action-secondary" id="btnPasteJsonModal">
+            <i class="fas fa-paste"></i> Colar Texto JSON
           </button>
           <button type="button" class="btn-action-secondary" id="btnExportJson">
             <i class="fas fa-file-download"></i> Baixar products.json
@@ -508,6 +515,27 @@
         <!-- Rendered via JS -->
       </div>
     </section>
+  </div>
+
+  <!-- Modal para Colar Texto JSON -->
+  <div class="modal-backdrop" id="pasteJsonModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="glass-modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-file-code" style="color: #7852ff;"></i> Colar Conteúdo JSON</h3>
+        <button class="modal-close-btn" id="closePasteJsonBtn"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.8rem;">
+          Se você tem o texto do arquivo <code>products.json</code> salvo no seu celular ou computador, cole-o abaixo para publicar tudo diretamente no Firebase:
+        </p>
+        <textarea id="pasteJsonTextarea" class="form-textarea" style="min-height: 200px; font-family: monospace; font-size: 0.85rem;" placeholder='[&#10;  {&#10;    "id": 1,&#10;    "name": "Nome do Produto",&#10;    "price": 35.00,&#10;    "description": "...",&#10;    "image": "https://..."&#10;  }&#10;]'></textarea>
+        <div style="margin-top: 1.2rem; display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn-action-primary" id="btnConfirmPasteJson" style="background: #4f46e5;">
+            <i class="fas fa-cloud-upload-alt"></i> Importar e Publicar Agora
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Firebase Store Engine -->
@@ -1022,6 +1050,102 @@
         formTitle.innerHTML = `<i class="fas fa-plus-circle" style="color: #7852ff;"></i> Cadastrar Novo Produto`;
         btnCancelEdit.style.display = 'none';
       });
+
+      // JSON Import Handling (Upload File or Paste Text)
+      const importJsonFileInput = document.getElementById('importJsonFileInput');
+      const btnPasteJsonModal = document.getElementById('btnPasteJsonModal');
+      const pasteJsonModal = document.getElementById('pasteJsonModal');
+      const closePasteJsonBtn = document.getElementById('closePasteJsonBtn');
+      const pasteJsonTextarea = document.getElementById('pasteJsonTextarea');
+      const btnConfirmPasteJson = document.getElementById('btnConfirmPasteJson');
+
+      async function processAndPublishJson(rawText) {
+        if (!rawText || !rawText.trim()) {
+          alert('O conteúdo JSON está vazio.');
+          return false;
+        }
+
+        try {
+          const parsed = JSON.parse(rawText.trim());
+          let items = [];
+          if (Array.isArray(parsed)) {
+            items = parsed;
+          } else if (parsed && typeof parsed === 'object') {
+            if (Array.isArray(parsed.products)) {
+              items = parsed.products;
+            } else {
+              items = Object.values(parsed);
+            }
+          }
+
+          if (!Array.isArray(items) || items.length === 0) {
+            alert('Nenhum produto válido encontrado no arquivo JSON.');
+            return false;
+          }
+
+          const cleaned = items.map((p, idx) => {
+            const id = p.id || (idx + 1);
+            const name = String(p.name || `Produto ${id}`).trim();
+            const price = parseFloat(p.price) || 0;
+            const category = String(p.category || 'Geral').trim();
+            const image = cleanImageUrl(p.image || '');
+            const preview = cleanImageUrl(p.preview || image);
+            const description = String(p.description || '').trim();
+            return { id, name, price, category, image, preview, description };
+          });
+
+          products = cleaned;
+          renderManageList();
+          await saveAndSyncProducts(false);
+          alert(`✅ Sucesso! ${cleaned.length} produtos foram importados e publicados no Firebase e no site!`);
+          return true;
+        } catch (err) {
+          console.error('JSON Parse error:', err);
+          alert('Erro ao interpretar o arquivo JSON. Certifique-se de que o arquivo está no formato correto.');
+          return false;
+        }
+      }
+
+      if (importJsonFileInput) {
+        importJsonFileInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = async function(evt) {
+            await processAndPublishJson(evt.target.result);
+            importJsonFileInput.value = '';
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      if (btnPasteJsonModal && pasteJsonModal) {
+        btnPasteJsonModal.addEventListener('click', () => {
+          pasteJsonModal.classList.add('is-open');
+          document.body.style.overflow = 'hidden';
+          if (pasteJsonTextarea) pasteJsonTextarea.focus();
+        });
+      }
+
+      if (closePasteJsonBtn && pasteJsonModal) {
+        closePasteJsonBtn.addEventListener('click', () => {
+          pasteJsonModal.classList.remove('is-open');
+          document.body.style.overflow = '';
+        });
+      }
+
+      if (btnConfirmPasteJson) {
+        btnConfirmPasteJson.addEventListener('click', async () => {
+          const content = pasteJsonTextarea.value.trim();
+          const ok = await processAndPublishJson(content);
+          if (ok) {
+            pasteJsonModal.classList.remove('is-open');
+            document.body.style.overflow = '';
+            pasteJsonTextarea.value = '';
+          }
+        });
+      }
 
       // Download products.json
       btnExportJson.addEventListener('click', () => {

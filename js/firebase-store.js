@@ -15,7 +15,7 @@ const FIREBASE_CONFIG = {
 const FIREBASE_DB_URL = "https://mercadovendasrapidasmz-default-rtdb.firebaseio.com/products.json";
 
 // Database service using Firebase REST API (ultra-fast, zero SDK overhead)
-const FirebaseStore = {
+window.FirebaseStore = {
   // Get all products in real time
   async getProducts() {
     try {
@@ -52,3 +52,5 @@ const FirebaseStore = {
     }
   }
 };
+
+var FirebaseStore = window.FirebaseStore;
