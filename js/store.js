@@ -1,14 +1,14 @@
 /**
  * VIP Digital Store - Client Store Engine
- * Telegram Link: https://t.me/SPIDERSELLER7
+ * Telegram Link: https://t.me/PREMIUM_SELLER2200
  */
 
 (function () {
   'use strict';
 
   const CONFIG = {
-    telegramUsername: 'SPIDERSELLER7',
-    telegramUrl: 'https://t.me/SPIDERSELLER7',
+    telegramUsername: 'PREMIUM_SELLER2200',
+    telegramUrl: 'https://t.me/PREMIUM_SELLER2200',
     storageKey: 'vip_store_custom_products',
     defaultDataPath: 'data/products.json'
   };

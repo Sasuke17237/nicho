@@ -11,7 +11,7 @@ Uma plataforma moderna de catálogo e vendas para produtos digitais (templates, 
   - Bolhas líquidas animadas no fundo (*animated fluid blobs*) que proporcionam reflexos e refrações sutis.
   - Sem sobreposição pesada de vidros, mantendo legibilidade total e visual limpo.
 - **Redirecionamento Direto para o Telegram:**
-  - Link oficial configurado: `https://t.me/SPIDERSELLER7`
+  - Link oficial configurado: `https://t.me/PREMIUM_SELLER2200`
   - Ao clicar em "Comprar", o cliente seleciona a forma de pagamento (Pix, Cripto, Cartão, PayPal) e o sistema gera automaticamente uma mensagem pré-formatada pronta para envio no chat privado.
 - **Painel Administrativo Oculto (`/kakashi`):**
   - **Invisível para os clientes:** Nenhum botão ou link da loja pública aponta para o painel.
