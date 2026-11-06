@@ -646,3 +646,56 @@ body {
   .payment-methods-grid { grid-template-columns: 1fr; }
   .product-grid { grid-template-columns: 1fr; }
 }
+
+/* =========================================================
+   Silent Google Auto-Translator Rules
+   Keeps the glassmorphism pristine & prevents layout shifts
+   ========================================================= */
+
+/* Prevent top body shift caused by Google Translate banner */
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+/* Hide all Google Translate default widgets, bars, tooltips and frames */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+.skiptranslate:not(#google_translate_element) {
+  display: none !important;
+}
+
+/* Remove hover highlights created by Google Translate */
+font[style] {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#google_translate_element {
+  display: none !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+

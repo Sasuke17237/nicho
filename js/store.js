@@ -16,7 +16,7 @@
   let allProducts = [];
   let currentCategory = 'all';
   let activeProductForBuy = null;
-  let selectedPaymentMethod = 'Pix';
+  let selectedPaymentMethod = 'Instant Pix';
 
   // Elements
   const productGrid = document.getElementById('productGrid');
@@ -117,7 +117,7 @@
     });
 
     categoryBar.innerHTML = categories.map(cat => {
-      const label = cat === 'all' ? '✨ Todos os Produtos' : cat;
+      const label = cat === 'all' ? '✨ All Products' : cat;
       const isActive = cat === currentCategory ? 'active' : '';
       return `<button class="cat-pill ${isActive}" data-category="${escapeHtml(cat)}">${escapeHtml(label)}</button>`;
     }).join('');
@@ -170,7 +170,7 @@
       productGrid.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
           <i class="fas fa-box-open" style="font-size: 2.5rem; opacity: 0.5; margin-bottom: 1rem; display: block;"></i>
-          <p style="font-size: 1.1rem; font-weight: 600;">Nenhum produto cadastrado no momento.</p>
+          <p style="font-size: 1.1rem; font-weight: 600;">No products available at the moment.</p>
         </div>
       `;
       return;
@@ -199,16 +199,27 @@
 
             <div class="card-actions">
               <button class="btn btn-preview" data-action="preview" data-id="${product.id}">
-                <i class="fas ${isVideo ? 'fa-play' : 'fa-eye'}"></i> Ver Prévia
+                <i class="fas ${isVideo ? 'fa-play' : 'fa-eye'}"></i> View Preview
               </button>
               <button class="btn btn-buy" data-action="buy" data-id="${product.id}">
-                <i class="fab fa-telegram-plane"></i> Comprar
+                <i class="fab fa-telegram-plane"></i> Buy Now
               </button>
             </div>
           </div>
         </article>
       `;
     }).join('');
+
+    // Trigger Google Translate re-check for dynamically injected cards
+    if (window.google && window.google.translate) {
+      setTimeout(function () {
+        var select = document.querySelector('.goog-te-combo');
+        if (select && select.value !== 'en') {
+          select.value = 'en';
+          select.dispatchEvent(new Event('change'));
+        }
+      }, 150);
+    }
   }
 
   // Check if URL is video
@@ -227,7 +238,7 @@
       previewContainer.innerHTML = `
         <video controls autoplay loop muted playsinline style="width:100%; height:100%; border-radius:18px;">
           <source src="${escapeHtml(mediaUrl)}" type="video/mp4">
-          Seu navegador não suporta este formato de vídeo.
+          Your browser does not support this video format.
         </video>
       `;
     } else {
@@ -252,13 +263,13 @@
     if (!product) return;
     activeProductForBuy = product;
     buyTitle.textContent = product.name;
-    buyDesc.textContent = product.description || 'Produto digital com entrega instantânea.';
+    buyDesc.textContent = product.description || 'Digital product with instant delivery.';
     buyPrice.textContent = `$${Number(product.price).toFixed(2)}`;
 
     // Reset payment method
-    selectedPaymentMethod = 'Pix';
+    selectedPaymentMethod = 'Instant Pix';
     document.querySelectorAll('.method-card').forEach(btn => {
-      btn.classList.toggle('is-selected', btn.getAttribute('data-method') === 'Pix');
+      btn.classList.toggle('is-selected', btn.getAttribute('data-method') === 'Instant Pix');
     });
 
     buyModal.classList.add('is-open');
@@ -276,7 +287,7 @@
     if (!activeProductForBuy) return;
 
     const priceFormatted = Number(activeProductForBuy.price).toFixed(2);
-    const text = `Olá! Gostaria de comprar o produto *${activeProductForBuy.name}* por *$${priceFormatted}*.\nForma de pagamento: *${selectedPaymentMethod}*.\nPor favor, me envie as instruções de pagamento.`;
+    const text = `Hello! I would like to purchase *${activeProductForBuy.name}* for *$${priceFormatted}*.\nPayment method: *${selectedPaymentMethod}*.\nPlease send me payment instructions.`;
     
     const encoded = encodeURIComponent(text);
     const telegramUrl = `https://t.me/${CONFIG.telegramUsername}?text=${encoded}`;
@@ -331,7 +342,7 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.method-card').forEach(b => b.classList.remove('is-selected'));
         btn.classList.add('is-selected');
-        selectedPaymentMethod = btn.getAttribute('data-method') || 'Pix';
+        selectedPaymentMethod = btn.getAttribute('data-method') || 'Instant Pix';
       });
     });
 

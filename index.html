@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
-  <title>VIP Store • Produtos Digitais Exclusivos</title>
+  <title>VIP Store • Exclusive Digital Goods</title>
   
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,7 +35,7 @@
         </div>
         <div class="brand-text">
           <h1>VIP STORE</h1>
-          <p><i class="fas fa-sparkles" style="color: #7852ff;"></i> Pré-visualização Instantânea • Acesso Imediato</p>
+          <p><i class="fas fa-sparkles" style="color: #7852ff;"></i> Instant Preview • Immediate Access</p>
         </div>
       </div>
 
@@ -58,7 +58,7 @@
         <i class="fas fa-gem"></i>
         <i class="fas fa-circle" style="font-size: 0.35rem;"></i>
       </div>
-      <p>Entregas seguras via Telegram • Pagamentos rápidos e suporte dedicado</p>
+      <p>Secure deliveries via Telegram • Fast payments & dedicated support</p>
     </footer>
   </div>
 
@@ -66,8 +66,8 @@
   <div class="modal-backdrop" id="previewModal" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="glass-modal">
       <div class="modal-header">
-        <h3 id="previewTitle">Demonstração</h3>
-        <button class="modal-close-btn" id="closePreviewBtn" aria-label="Fechar modal">
+        <h3 id="previewTitle">Preview</h3>
+        <button class="modal-close-btn" id="closePreviewBtn" aria-label="Close modal">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -81,8 +81,8 @@
   <div class="modal-backdrop" id="buyModal" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="glass-modal">
       <div class="modal-header">
-        <h3>Finalizar Compra</h3>
-        <button class="modal-close-btn" id="closeBuyBtn" aria-label="Fechar modal">
+        <h3>Complete Purchase</h3>
+        <button class="modal-close-btn" id="closeBuyBtn" aria-label="Close modal">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -90,27 +90,27 @@
         <!-- Selected Product Overview -->
         <div class="checkout-product-strip">
           <div class="strip-details">
-            <h4 id="buyProductName">Carregando produto...</h4>
-            <p id="buyProductDesc">Descrição curta do item selecionado.</p>
+            <h4 id="buyProductName">Loading product...</h4>
+            <p id="buyProductDesc">Short description of selected item.</p>
           </div>
           <div class="strip-price" id="buyProductPrice">$0.00</div>
         </div>
 
-        <p class="payment-grid-title">Escolha o método de pagamento preferido:</p>
+        <p class="payment-grid-title">Choose your preferred payment method:</p>
         
         <!-- Payment Options Grid -->
         <div class="payment-methods-grid">
-          <div class="method-card is-selected" data-method="Pix">
+          <div class="method-card is-selected" data-method="Instant Pix">
             <i class="fas fa-qrcode"></i>
-            <span>Pix Instantâneo</span>
+            <span>Instant Pix</span>
           </div>
-          <div class="method-card" data-method="Cripto (USDT/BTC)">
+          <div class="method-card" data-method="Crypto (USDT / BTC)">
             <i class="fas fa-coins"></i>
-            <span>Cripto (USDT / BTC)</span>
+            <span>Crypto (USDT / BTC)</span>
           </div>
-          <div class="method-card" data-method="Cartão de Crédito">
+          <div class="method-card" data-method="Credit Card">
             <i class="fas fa-credit-card"></i>
-            <span>Cartão de Crédito</span>
+            <span>Credit Card</span>
           </div>
           <div class="method-card" data-method="PayPal">
             <i class="fab fa-paypal"></i>
@@ -121,11 +121,52 @@
         <!-- Action Button -->
         <button class="checkout-action-btn" id="confirmTelegramBuyBtn">
           <i class="fab fa-telegram-plane"></i>
-          <span>Continuar no Telegram</span>
+          <span>Continue to Telegram</span>
         </button>
       </div>
     </div>
   </div>
+
+  <!-- Silent Automatic English Translator -->
+  <div id="google_translate_element" style="display:none;"></div>
+  <script type="text/javascript">
+    (function () {
+      function setGoogleTransCookie() {
+        var cookieVal = '/auto/en';
+        document.cookie = 'googtrans=' + cookieVal + '; path=/;';
+        document.cookie = 'googtrans=' + cookieVal + '; domain=' + window.location.hostname + '; path=/;';
+        var parts = window.location.hostname.split('.');
+        if (parts.length > 2) {
+          document.cookie = 'googtrans=' + cookieVal + '; domain=.' + parts.slice(-2).join('.') + '; path=/;';
+        }
+      }
+      setGoogleTransCookie();
+
+      window.googleTranslateElementInit = function () {
+        new google.translate.TranslateElement({
+          pageLanguage: 'auto',
+          includedLanguages: 'en',
+          autoDisplay: false
+        }, 'google_translate_element');
+
+        var checkCombo = setInterval(function () {
+          var select = document.querySelector('.goog-te-combo');
+          if (select) {
+            if (select.value !== 'en') {
+              select.value = 'en';
+              select.dispatchEvent(new Event('change'));
+            }
+            clearInterval(checkCombo);
+          }
+        }, 200);
+
+        setTimeout(function () {
+          clearInterval(checkCombo);
+        }, 10000);
+      };
+    })();
+  </script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <!-- Firebase Engine & Store Engine -->
   <script src="js/firebase-store.js"></script>
